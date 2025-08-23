@@ -1,0 +1,21 @@
+# Data & ML
+numpy==2.1.2
+pandas==2.2.3
+scikit-learn==1.5.1
+torch>=2.3.0
+datasets==2.20.0
+transformers==4.43.3
+gensim==4.3.3
+
+# Visualization
+matplotlib==3.9.2
+seaborn==0.13.2
+
+# Text preprocessing
+beautifulsoup4==4.12.3
+sentencepiece==0.2.0
+
+# FastAPI & server
+fastapi==0.115.0
+uvicorn==0.30.6
+
