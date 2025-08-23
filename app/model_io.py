@@ -3,7 +3,8 @@ import joblib
 import torch
 import json
 
-MODEL_DIR = "model"
+MODEL_DIR = "models"
+METRICS_FILE = os.path.join(MODEL_DIR, "metrics.json")
 
 def ensure_model_dir():
     os.makedirs(MODEL_DIR, exist_ok=True)
@@ -38,24 +39,25 @@ def load_model(name, bert_class=None, bert_model=None):
 
 
 ###### Model Evaluation Metrics Related
-def save_metrics(name, metrics: dict):
-    """Save evaluation metrics into metrics.json in models dir"""
-    ensure_model_dir()
-    metrics_path = os.path.join(MODEL_DIR, "metrics.json")
-    if os.path.exists(metrics_path):
-        with open(metrics_path, "r") as f:
+def save_metrics(model_name: str, metrics: dict):
+    """Save metrics for a specific model into metrics.json (append/update)."""
+    if os.path.exists(METRICS_FILE):
+        with open(METRICS_FILE, "r") as f:
             all_metrics = json.load(f)
     else:
         all_metrics = {}
-    all_metrics[name] = metrics
-    with open(metrics_path, "w") as f:
+
+    # update only this model's metrics
+    all_metrics[model_name] = metrics
+
+    with open(METRICS_FILE, "w") as f:
         json.dump(all_metrics, f, indent=4)
 
-def load_metrics():
-    """Load all stored metrics from disk"""
-    metrics_path = os.path.join(MODEL_DIR, "metrics.json")
-    if not os.path.exists(metrics_path):
-        return {}
-    with open(metrics_path, "r") as f:
-        return json.load(f)
+
+def load_metrics() -> dict:
+    """Load all metrics from metrics.json if exists."""
+    if os.path.exists(METRICS_FILE):
+        with open(METRICS_FILE, "r") as f:
+            return json.load(f)
+    return {}
 ###################################

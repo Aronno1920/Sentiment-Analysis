@@ -7,7 +7,8 @@ from transformers import AutoModel
 import torch
 ################################################
 from app.model_train import train_tfidf, train_word2vec, train_bert
-from app.model_io import save_model, load_model, save_metrics
+from app.model_io import save_model, load_model
+from app.model_io import save_metrics, load_metrics
 ################################################
 
 
@@ -95,9 +96,21 @@ def train_model_bert():
 ################################################
 
 
+###### Show Matrics
+@app.get("/metrics")
+def get_metrics():
+    """Return evaluation metrics for all trained models."""
+    metrics = load_metrics()
+    if not metrics:
+        return {"message": "No metrics found. Please train a model first."}
+    return {"metrics": metrics}
+################################################
+
+
+
 ###### Model Train - BERT
-@app.post("/predict/{model_name}")
-def predict(model_name: str, req: ReviewRequest):
+@app.post("/predict_single/{model_name}")
+def predict_single(model_name: str, req: ReviewRequest):
     text = req.text
 
     if model_name not in MODELS:
@@ -127,4 +140,52 @@ def predict(model_name: str, req: ReviewRequest):
         pred = clf.predict(X)[0]
 
     return {"text": text, "prediction": "positive" if pred == 1 else "negative"}
+################################################
+
+
+
+###### Model Train - BERT
+@app.post("/predict")
+def predict(req: ReviewRequest):
+    text = req.text
+    results = []
+
+    for model_name in ["tfidf", "word2vec", "bert"]:
+        if model_name not in MODELS:
+            results.append({
+                "model": model_name,
+                "error": f"Model '{model_name}' not loaded. Train or restart app."
+            })
+            continue
+
+        if model_name == "tfidf":
+            clf, tfidf = MODELS["tfidf"]
+            X = tfidf.transform([text])
+            pred = clf.predict(X)[0]
+
+        elif model_name == "word2vec":
+            clf, w2v = MODELS["word2vec"]
+            tokens = tokenize_for_w2v(text)
+            vecs = [w2v.wv[w] for w in tokens if w in w2v.wv]
+            X = np.mean(vecs, axis=0).reshape(1, -1) if vecs else np.zeros((1, w2v.vector_size))
+            pred = clf.predict(X)[0]
+
+        elif model_name == "bert":
+            clf, tokenizer, bert_model = MODELS["bert"]
+            bert_model.eval()
+            enc = tokenizer([clean_text(text)], truncation=True, padding=True, max_length=512, return_tensors="pt").to(bert_model.device)
+            with torch.no_grad():
+                out = bert_model(**enc).last_hidden_state
+                mask = enc["attention_mask"].unsqueeze(-1).expand(out.shape).float()
+                pooled = (out * mask).sum(1) / mask.sum(1)
+                X = pooled.cpu().numpy()
+            pred = clf.predict(X)[0]
+
+        results.append({
+            "model": model_name,
+            "prediction": "positive" if pred == 1 else "negative"
+        })
+
+    return {"text": text, "results": results}
+
 ################################################
