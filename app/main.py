@@ -162,6 +162,7 @@ def predict(req: ReviewRequest):
             clf, tfidf = MODELS["tfidf"]
             X = tfidf.transform([text])
             pred = clf.predict(X)[0]
+            proba = max(clf.predict_proba(X)[0])
 
         elif model_name == "word2vec":
             clf, w2v = MODELS["word2vec"]
@@ -169,6 +170,7 @@ def predict(req: ReviewRequest):
             vecs = [w2v.wv[w] for w in tokens if w in w2v.wv]
             X = np.mean(vecs, axis=0).reshape(1, -1) if vecs else np.zeros((1, w2v.vector_size))
             pred = clf.predict(X)[0]
+            proba = max(clf.predict_proba(X)[0])
 
         elif model_name == "bert":
             clf, tokenizer, bert_model = MODELS["bert"]
@@ -180,10 +182,12 @@ def predict(req: ReviewRequest):
                 pooled = (out * mask).sum(1) / mask.sum(1)
                 X = pooled.cpu().numpy()
             pred = clf.predict(X)[0]
+            proba = max(clf.predict_proba(X)[0])
 
         results.append({
             "model": model_name,
-            "prediction": "positive" if pred == 1 else "negative"
+            "prediction": "positive" if pred == 1 else "negative",
+            "probability": f"{proba * 100:.2f}%"   # format as percentage
         })
 
     return {"text": text, "results": results}
