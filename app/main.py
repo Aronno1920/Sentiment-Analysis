@@ -15,7 +15,7 @@ from app.model_io import save_metrics, load_metrics
 app = FastAPI(
     title="Sentiment Analysis API",
     version="1.0.0",
-    description="API for Analysising sentiment using IMDB dataset"
+    description="API on sentiment analysis using the IMDB movie reviews dataset. The dataset contains 50,000 reviews equally divided into positive and negative sentiments. Your task is to build models that can classify whether a given review expresses a positive or negative opinion."
     )
 
 # Global model storage
