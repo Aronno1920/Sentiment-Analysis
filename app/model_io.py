@@ -2,9 +2,16 @@ import os
 import joblib
 import torch
 import json
+from pathlib import Path
 
+
+# -------------------------
+# Paths
+# -------------------------
+BASE_DIR = Path(__file__).resolve().parent.parent
 MODEL_DIR = "models"
-METRICS_FILE = os.path.join(MODEL_DIR, "metrics.json")
+METRICS_FILE = BASE_DIR / MODEL_DIR / "metrics.json"
+
 
 def ensure_model_dir():
     os.makedirs(MODEL_DIR, exist_ok=True)
