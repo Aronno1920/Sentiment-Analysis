@@ -45,7 +45,7 @@ def load_models_on_startup():
 
 
 ###### API health check
-@app.get("/health")
+@app.get("/")
 async def health_check():
     return {"status": "ok", "message": "Welcome! Sentiment Analysis API is operational."}
 ################################################
